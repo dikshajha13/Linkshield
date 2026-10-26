@@ -1,98 +1,81 @@
+# LinkShield - Suspicious URL Analyzer
 
-# 🛡️ LinkShield — Suspicious URL Analyzer
+**Think Before You Click.** LinkShield is a Web Technology mini project that analyzes the *text* of a URL, scores it with transparent rules and explains every finding in plain language.
 
-LinkShield is a web-based security tool that analyzes URLs for potentially suspicious patterns and helps users make safer decisions before visiting unfamiliar links.
+## Objective
+Teach users to spot common phishing patterns in links, and demonstrate a full client-server web application: HTML/CSS/JavaScript front end, Flask REST-style API, SQLite persistence.
 
-Instead of simply labeling a link as safe or unsafe, LinkShield highlights suspicious indicators to make the analysis easier to understand.
+## Features
+- Rule-based analysis (20 documented rules, weights shown in the "How It Works" section)
+- Risk score 0-100 with Low / Medium / High levels
+- Plain-language explanation for each indicator, plus positive observations and advice
+- Validation in both the browser and the server
+- Scan history stored in SQLite: revisit past results, clear with confirmation
+- Responsive, accessible dark UI; no frameworks, no external CDN
+- Safe by design: the server **never fetches or opens** a submitted URL (no SSRF)
 
-## ✨ Features
+## Technology stack
+HTML5, CSS3, vanilla JavaScript - Python 3 + Flask - SQLite (`sqlite3` module). Only one dependency: Flask.
 
-- **URL Analysis:** Analyze URLs for potentially suspicious characteristics.
-- **Risk Assessment:** Identify warning signs commonly associated with malicious links.
-- **Explainable Results:** Display indicators that contribute to a URL's risk assessment.
-- **Scan History:** Review previously analyzed URLs and their results.
-- **Simple Interface:** A clean, user-friendly interface for quick URL checks.
+## Setup
+```bash
+cd linkshield
+python -m venv venv
+# Windows (PowerShell):  venv\Scripts\Activate.ps1      (cmd: venv\Scripts\activate.bat)
+# macOS / Linux:         source venv/bin/activate
+pip install -r requirements.txt
+python app.py
+```
+Open **http://127.0.0.1:5000** in your browser. Stop the server with `Ctrl+C`.
+The database file `linkshield.db` is created automatically next to `app.py`.
 
-## 🧰 Tech Stack
+Run the tests: `python -m unittest discover -s tests -v`
 
-- **Frontend:** HTML, CSS, JavaScript
-- **Backend:** Python, Flask
-- **Database:** SQLite
+## API
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/` , `/history` | Pages |
+| POST | `/api/scan` | Body `{"url": "..."}` -> validated, analyzed, saved |
+| GET | `/api/history?limit=20` | Recent scans (newest first) |
+| GET | `/api/history/<id>` | Full stored result of one scan |
+| DELETE | `/api/history` | Clear all history |
 
-## 🔍 How It Works
+Responses are JSON: `{"ok": true, ...}` or `{"ok": false, "error": "message"}` with a 4xx status.
 
-1. Enter a URL into the LinkShield interface.
-2. Submit the URL for analysis.
-3. The application checks for suspicious URL patterns.
-4. Review the risk assessment and the indicators detected.
-5. View previous scans through the scan history.
+## Methodology
+1. Validate the string (http/https only, length <= 2048, no spaces, valid hostname).
+2. Parse with `urllib.parse.urlsplit`; classify host as domain / IP / obfuscated IP.
+3. Apply each rule; every match adds its fixed weight. Score = min(100, sum).
+4. Bands: 0-24 Low, 25-59 Medium, 60-100 High. A single weak signal (HTTP, long URL, odd port) cannot reach High.
+5. Save to SQLite and return the explanation as JSON; the browser renders it with `textContent` (no HTML injection).
 
-## 🚀 Getting Started
+## Security notes
+Parameterized SQL, 8 KB request limit, CSP and other headers, escaped output, no IP addresses or cookies stored, history capped at 500 rows.
 
-### Prerequisites
+## Limitations
+- Looks only at URL text: no reputation lists, page content, DNS/WHOIS or certificate checks.
+- A brand-new phishing site on a clean-looking domain can score Low; a legitimate site with an odd URL can score higher.
+- The brand, shortener and TLD lists are small hand-written samples.
+- The score is a heuristic, not a probability. Never use it as your only protection.
 
-- Python 3.10 or later
-- pip
-- Git (optional)
+## Future enhancements
+Larger or configurable rule lists, optional reputation-API integration (with SSRF protections), browser extension, user-adjustable weights, CSV export of history, comparison with a machine-learning model.
 
-### Installation
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/YOUR-USERNAME/LinkShield.git
-   ```
-
-2. Navigate to the project directory:
-
-   ```bash
-   cd LinkShield
-   ```
-
-3. Install the dependencies:
-
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. Run the application:
-
-   ```bash
-   python app.py
-   ```
-
-5. Open the local URL displayed in your terminal, usually:
-
-   `http://127.0.0.1:5000`
-
-## 📁 Project Structure
-
-```text
-LinkShield/
-├── app.py
-├── requirements.txt
-├── render.yaml
-├── templates/
-├── static/
-└── README.md
+## Project structure
+```
+linkshield/
+  app.py  analyzer.py  database.py  requirements.txt  README.md
+  templates/ index.html history.html
+  static/ css/style.css  js/app.js  images/logo.svg
+  tests/test_linkshield.py
+  docs/REPORT.md        (abstract, diagrams, viva Q&A)
 ```
 
-*The exact folder structure may vary depending on the project files.*
 
-## 🌐 Deployment
+## Deploy on Render
+1. Push this `linkshield` folder to a GitHub repository.
+2. In Render, choose **New → Blueprint** and select the repository containing `render.yaml`, or create a **Web Service** manually.
+3. For a manual service, use the root directory `linkshield` if the repository contains this folder, build command `pip install -r requirements.txt`, and start command `gunicorn app:app --bind 0.0.0.0:$PORT`.
+4. Deploy, then open the public `onrender.com` URL provided by Render.
 
-LinkShield can be deployed using a Python-compatible hosting platform such as [Render](https://render.com/).
-
-After deployment, the application can be accessed through a public URL without requiring users to install Python or run the project locally.
-
-## ⚠️ Disclaimer
-
-LinkShield is an educational project intended to demonstrate basic URL analysis and security-awareness concepts. Its results are indicative, not definitive. It does not guarantee that a URL is safe or malicious, and users should exercise caution when opening unfamiliar links.
-
-## 🎯 Project Goal
-
-The goal of LinkShield is to make basic URL security analysis more accessible by combining suspicious-pattern detection with clear explanations in a simple web application.
-
----
-
-**Built as a Web Technology project.**
+Note: SQLite data on a free instance may not persist across restarts/redeploys. For persistent scan history, configure a persistent disk or use a hosted database.
