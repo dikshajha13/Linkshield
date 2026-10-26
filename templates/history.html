@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scan History - LinkShield</title>
+  <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-page="history">
+  <header class="nav">
+    <a class="brand" href="/"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" width="28" height="28"> LinkShield</a>
+    <nav aria-label="Main"><a href="/">Home</a><a href="/#how-it-works">How It Works</a><a href="/history" aria-current="page">Scan History</a></nav>
+  </header>
+  <main>
+    <section class="hero compact">
+      <h1>Scan History</h1>
+      <p class="lead">The 20 most recent scans, stored locally in SQLite. Only the URL text, score and findings are saved.</p>
+      <button type="button" id="clear-btn" class="danger">Clear history</button>
+    </section>
+    <section id="history-section" aria-live="polite">
+      <p id="history-empty" class="muted" hidden>No scans yet. <a href="/">Scan your first URL</a>.</p>
+      <div id="history-list" class="history-list"></div>
+    </section>
+    <section id="result" class="result" aria-live="polite" hidden></section>
+  </main>
+  <footer class="footer">
+    <p class="small muted">Results are heuristic and cannot guarantee that any website is safe or malicious.</p>
+  </footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

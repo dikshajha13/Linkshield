@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LinkShield - Suspicious URL Analyzer</title>
+  <meta name="description" content="LinkShield explains suspicious patterns in URLs. It analyzes text only and never visits the link.">
+  <link rel="icon" href="{{ url_for('static', filename='images/logo.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body data-page="home">
+  <header class="nav">
+    <a class="brand" href="/"><img src="{{ url_for('static', filename='images/logo.svg') }}" alt="" width="28" height="28"> LinkShield</a>
+    <nav aria-label="Main"><a href="/">Home</a><a href="/#how-it-works">How It Works</a><a href="/history">Scan History</a></nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <p class="eyebrow">URL pattern analysis</p>
+      <h1>Think Before You Click.</h1>
+      <p class="lead">Paste a link and LinkShield checks its text for patterns often seen in phishing, such as disguised IP addresses, look-alike domains and hidden redirects, then explains each finding in plain language. It never opens the link.</p>
+
+      <form id="scan-form" novalidate>
+        <label for="url-input" class="sr-only">URL to scan</label>
+        <div class="input-row">
+          <input id="url-input" type="text" inputmode="url" autocomplete="off" spellcheck="false" placeholder="https://example.com/page" maxlength="2048">
+          <button type="submit" id="scan-btn">Scan URL</button>
+        </div>
+        <p id="form-error" class="form-error" role="alert" hidden></p>
+      </form>
+
+      <div class="examples">
+        <span>Try an example:</span>
+        <div id="example-list">
+          <button type="button" class="chip" data-url="https://www.example.com/docs/index.html">Normal HTTPS</button>
+          <button type="button" class="chip" data-url="http://example.com/login">HTTP</button>
+          <button type="button" class="chip" data-url="http://192.168.4.20/secure/verify">IP address</button>
+          <button type="button" class="chip" data-url="https://login.secure.account.verify.example.net/update">Many subdomains</button>
+          <button type="button" class="chip" data-url="https://paypal.com@example.net/signin">@ trick</button>
+          <button type="button" class="chip" data-url="https://xn--pple-43d.example.com/">Punycode</button>
+          <button type="button" class="chip" data-url="https://bit.ly/abc123">Shortener</button>
+          <button type="button" class="chip" data-url="https://example.com/go?next=%252e%252e%2F%3Cscript%3E">Encoded pattern</button>
+        </div>
+        <p class="small muted">Examples are only analyzed as text. LinkShield never visits them.</p>
+      </div>
+    </section>
+
+    <section id="result" class="result" aria-live="polite" hidden></section>
+
+    <section id="how-it-works" class="how">
+      <h2>How It Works</h2>
+      <ol class="steps">
+        <li><strong>Validate.</strong> The URL is checked in the browser and again on the server.</li>
+        <li><strong>Apply rules.</strong> Each rule below that matches adds its points to the score.</li>
+        <li><strong>Explain.</strong> You get the score, a risk level and a plain-language reason for each finding.</li>
+      </ol>
+      <p>Score bands: <span class="pill level-low">Low 0&ndash;{{ medium - 1 }}</span>
+        <span class="pill level-medium">Medium {{ medium }}&ndash;{{ high - 1 }}</span>
+        <span class="pill level-high">High {{ high }}&ndash;100</span>
+        The total is capped at 100. It is a heuristic, not a probability of an attack, and one weak signal is never enough for a high rating.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Rule</th><th>Points</th><th>Why it matters</th></tr></thead>
+          <tbody>
+          {% for title, points, description in rules %}
+            <tr><td>{{ title }}</td><td class="nowrap">{{ points }}</td><td>{{ description }}</td></tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p><strong>LinkShield</strong> - Web Technology mini project (HTML, CSS, JavaScript, Flask, SQLite).</p>
+    <p class="small muted">Responsible use: for education and awareness only. Results are heuristic and cannot guarantee that any website is safe or malicious. Do not rely on it as your only protection.</p>
+  </footer>
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
